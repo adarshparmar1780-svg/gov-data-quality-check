@@ -7,8 +7,8 @@ A read-only Python command-line tool for spotting basic structural problems in a
 Requires Python 3.10 or newer. No packages or network access are needed.
 
 ```powershell
-py .\\csv_healthcheck.py .\\sample_data\\all_india_rainfall_1901_1906.csv
-py .\\csv_healthcheck.py .\\sample_data\\demo_with_issues.csv
+py .\csv_healthcheck.py .\sample_data\all_india_rainfall_1901_1906.csv
+py .\csv_healthcheck.py .\sample_data\demo_with_issues.csv
 ```
 
 The first file is a six-row excerpt from an India Meteorological Department rainfall dataset listed on the Government of India's Open Government Data platform. See [SOURCES.md](SOURCES.md) for attribution, license, and limits. The second file is synthetic and intentionally includes examples of the findings this tool reports.
