@@ -28,7 +28,14 @@ def inspect_csv(path):
         malformed_rows = []
         row_count = 0
 
-        for line_number, row in enumerate(rows, start=2):
+        previous_line = rows.line_num
+        while True:
+            try:
+                row = next(rows)
+            except StopIteration:
+                break
+            line_number = previous_line + 1
+            previous_line = rows.line_num
             row_count += 1
             if len(row) != len(headers):
                 malformed_rows.append((line_number, len(row)))
