@@ -3,6 +3,7 @@
 
 import argparse
 import csv
+import json
 import sys
 from collections import Counter
 from pathlib import Path
@@ -60,6 +61,7 @@ def inspect_csv(path):
 def main():
     parser = argparse.ArgumentParser(description="Check CSV structure, blank cells, and repeated rows.")
     parser.add_argument("csv_file", type=Path, help="CSV file to inspect (read-only)")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="print a machine-readable JSON report")
     args = parser.parse_args()
 
     try:
@@ -67,6 +69,22 @@ def main():
     except (OSError, UnicodeError, csv.Error, ValueError) as exc:
         print(f"Could not inspect CSV: {exc}", file=sys.stderr)
         return 2
+
+    nonempty_missing = [(name, count) for name, count in report["missing"].items() if count]
+    has_findings = report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing
+    if args.json_output:
+        print(json.dumps({
+            "file": str(args.csv_file),
+            "headers": report["headers"],
+            "data_rows": report["rows"],
+            "duplicate_rows": report["duplicate_rows"],
+            "malformed_rows": [
+                {"line": line, "field_count": fields, "expected_field_count": len(report["headers"])}
+                for line, fields in report["malformed_rows"]
+            ],
+            "blank_or_absent_cells": dict(report["missing"]),
+        }, indent=2))
+        return 1 if has_findings else 0
 
     print(f"CSV data quality report: {args.csv_file}")
     print(f"Data rows: {report['rows']}")
@@ -77,7 +95,6 @@ def main():
         for line_number, field_count in report["malformed_rows"]:
             print(f"  Line {line_number}: {field_count} fields; expected {len(report['headers'])}")
 
-    nonempty_missing = [(name, count) for name, count in report["missing"].items() if count]
     if nonempty_missing:
         print("Blank or absent cells:")
         for name, count in nonempty_missing:
@@ -85,7 +102,6 @@ def main():
     else:
         print("Blank or absent cells: none detected")
 
-    has_findings = report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing
     if has_findings:
         print("Review the flagged rows and source documentation; these checks do not prove the data is incorrect.")
         return 1

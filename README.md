@@ -9,6 +9,7 @@ Requires Python 3.10 or newer. No packages or network access are needed.
 ```powershell
 py .\csv_healthcheck.py .\sample_data\all_india_rainfall_1901_1906.csv
 py .\csv_healthcheck.py .\sample_data\demo_with_issues.csv
+py .\csv_healthcheck.py --json .\sample_data\demo_with_issues.csv
 ```
 
 The first file is a six-row excerpt from an India Meteorological Department rainfall dataset listed on the Government of India's Open Government Data platform. See [SOURCES.md](SOURCES.md) for attribution, license, and limits. The second file is synthetic and intentionally includes examples of the findings this tool reports.
@@ -25,6 +26,6 @@ It does not check numeric ranges, units, statistical outliers, whether a value i
 
 ## What the examples show
 
-The synthetic CSV includes a repeated row, a blank value, and a row with an extra field, so it demonstrates the kinds of structural findings the checker can report. The rainfall excerpt has six data rows and eighteen columns. A clean result only means these specific checks found no configured structural problems; it does not confirm that the measurements are accurate or current.
+Use `--json` to get a structured report for scripts; a finding still returns exit code 1. The synthetic CSV includes a repeated row, a blank value, and a row with an extra field, so it demonstrates the kinds of structural findings the checker can report. The rainfall excerpt has six data rows and eighteen columns. A clean result only means these specific checks found no configured structural problems; it does not confirm that the measurements are accurate or current.
 
 AI-assisted initial draft. Review and understand the code and data sources before presenting this project as your work.
