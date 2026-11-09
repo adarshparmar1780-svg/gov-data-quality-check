@@ -23,6 +23,10 @@ class InspectCsvTests(unittest.TestCase):
         self.assertEqual(report["missing"]["name"], 1)
         self.assertEqual(report["malformed_rows"], [])
 
+    def test_rejects_empty_file_with_clear_error(self):
+        with self.assertRaisesRegex(ValueError, "the CSV file is empty"):
+            self.inspect_text("")
+
     def test_counts_duplicate_rows_after_first_occurrence(self):
         report = self.inspect_text("id,name\n1,Ada\n1,Ada\n")
         self.assertEqual(report["duplicate_rows"], 1)
