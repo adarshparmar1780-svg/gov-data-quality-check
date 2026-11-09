@@ -31,6 +31,10 @@ class InspectCsvTests(unittest.TestCase):
         report = self.inspect_text("id,name\n1,Ada\n1,Ada\n")
         self.assertEqual(report["duplicate_rows"], 1)
 
+    def test_counts_cells_containing_nul_bytes(self):
+        report = self.inspect_text("id,name\n1,A\x00da\n")
+        self.assertEqual(report["nul_cells"], 1)
+
     def test_tracks_start_line_of_multiline_csv_record(self):
         report = self.inspect_text('id,note\n1,"first\nsecond"\n2,ok\n')
         self.assertEqual(report["rows"], 2)
@@ -47,4 +51,3 @@ class InspectCsvTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

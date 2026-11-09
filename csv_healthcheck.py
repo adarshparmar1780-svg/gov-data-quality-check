@@ -24,6 +24,7 @@ def inspect_csv(path):
             raise ValueError("the header row contains duplicate column names")
 
         missing = Counter()
+        nul_cells = 0
         seen_rows = set()
         duplicate_rows = 0
         malformed_rows = []
@@ -43,6 +44,7 @@ def inspect_csv(path):
             for index, header in enumerate(headers):
                 if index >= len(row) or not row[index].strip():
                     missing[header] += 1
+            nul_cells += sum("\x00" in cell for cell in row)
             key = tuple(cell.strip() for cell in row)
             if key in seen_rows:
                 duplicate_rows += 1
@@ -53,6 +55,7 @@ def inspect_csv(path):
         "headers": headers,
         "rows": row_count,
         "missing": missing,
+        "nul_cells": nul_cells,
         "duplicate_rows": duplicate_rows,
         "malformed_rows": malformed_rows,
     }
@@ -71,7 +74,7 @@ def main():
         return 2
 
     nonempty_missing = [(name, count) for name, count in report["missing"].items() if count]
-    has_findings = report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing
+    has_findings = report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing or report["nul_cells"]
     if args.json_output:
         print(json.dumps({
             "file": str(args.csv_file),
@@ -83,6 +86,7 @@ def main():
                 for line, fields in report["malformed_rows"]
             ],
             "blank_or_absent_cells": dict(report["missing"]),
+            "cells_with_nul_bytes": report["nul_cells"],
         }, indent=2))
         return 1 if has_findings else 0
 
@@ -102,6 +106,7 @@ def main():
     else:
         print("Blank or absent cells: none detected")
 
+    print("Cells containing NUL bytes: {}".format(report["nul_cells"]))
     if has_findings:
         print("Review the flagged rows and source documentation; these checks do not prove the data is incorrect.")
         return 1
