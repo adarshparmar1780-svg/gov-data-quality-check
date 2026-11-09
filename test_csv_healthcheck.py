@@ -13,6 +13,10 @@ class InspectCsvTests(unittest.TestCase):
             path.write_text(text, encoding="utf-8", newline="")
             return inspect_csv(path)
 
+    def test_accepts_utf8_bom_before_first_header(self):
+        report = self.inspect_text("\ufeffid,name\n1,Ada\n")
+        self.assertEqual(report["headers"], ["id", "name"])
+
     def test_counts_rows_and_blank_cells(self):
         report = self.inspect_text("id,name\n1,Ada\n2,\n")
         self.assertEqual(report["rows"], 2)
@@ -39,3 +43,4 @@ class InspectCsvTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
