@@ -18,7 +18,7 @@ The first file is a six-row excerpt from an India Meteorological Department rain
 
 - Empty or duplicate header names
 - Blank cells per column
-- Cells containing NUL characters
+- Cells containing NUL characters, with row and column locations
 - Repeated rows
 - Rows with too few or too many fields
 - CSV quoting and file-reading errors
@@ -30,4 +30,3 @@ It does not check numeric ranges, units, statistical outliers, whether a value i
 Use `--json` to get a structured report for scripts; a finding still returns exit code 1. The synthetic CSV includes a repeated row, a blank value, and a row with an extra field, so it demonstrates the kinds of structural findings the checker can report. The rainfall excerpt has six data rows and eighteen columns. A clean result only means these specific checks found no configured structural problems; it does not confirm that the measurements are accurate or current.
 
 AI-assisted initial draft. Review and understand the code and data sources before presenting this project as your work.
-

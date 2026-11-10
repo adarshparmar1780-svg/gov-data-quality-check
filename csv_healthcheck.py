@@ -25,6 +25,7 @@ def inspect_csv(path):
 
         missing = Counter()
         nul_cells = 0
+        nul_locations = []
         seen_rows = set()
         duplicate_rows = 0
         malformed_rows = []
@@ -44,7 +45,11 @@ def inspect_csv(path):
             for index, header in enumerate(headers):
                 if index >= len(row) or not row[index].strip():
                     missing[header] += 1
-            nul_cells += sum("\x00" in cell for cell in row)
+            for index, cell in enumerate(row):
+                if "\x00" in cell:
+                    column = headers[index] if index < len(headers) else f"field {index + 1}"
+                    nul_locations.append((line_number, column))
+            nul_cells = len(nul_locations)
             key = tuple(cell.strip() for cell in row)
             if key in seen_rows:
                 duplicate_rows += 1
@@ -56,6 +61,7 @@ def inspect_csv(path):
         "rows": row_count,
         "missing": missing,
         "nul_cells": nul_cells,
+        "nul_locations": nul_locations,
         "duplicate_rows": duplicate_rows,
         "malformed_rows": malformed_rows,
     }
@@ -87,6 +93,9 @@ def main():
             ],
             "blank_or_absent_cells": dict(report["missing"]),
             "cells_with_nul_bytes": report["nul_cells"],
+            "nul_cell_locations": [
+                {"line": line, "column": column} for line, column in report["nul_locations"]
+            ],
         }, indent=2))
         return 1 if has_findings else 0
 
@@ -107,6 +116,8 @@ def main():
         print("Blank or absent cells: none detected")
 
     print("Cells containing NUL bytes: {}".format(report["nul_cells"]))
+    for line, column in report["nul_locations"]:
+        print(f"  Line {line}, column {column}")
     if has_findings:
         print("Review the flagged rows and source documentation; these checks do not prove the data is incorrect.")
         return 1

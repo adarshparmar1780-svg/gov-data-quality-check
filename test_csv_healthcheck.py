@@ -34,6 +34,7 @@ class InspectCsvTests(unittest.TestCase):
     def test_counts_cells_containing_nul_bytes(self):
         report = self.inspect_text("id,name\n1,A\x00da\n")
         self.assertEqual(report["nul_cells"], 1)
+        self.assertEqual(report["nul_locations"], [(2, "name")])
 
     def test_tracks_start_line_of_multiline_csv_record(self):
         report = self.inspect_text('id,note\n1,"first\nsecond"\n2,ok\n')
