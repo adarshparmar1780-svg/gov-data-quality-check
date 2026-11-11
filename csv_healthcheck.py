@@ -4,9 +4,24 @@
 import argparse
 import csv
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
+
+FORMULA_PREFIXES = ("=", "@", "\t", "\r", "\n", "＝", "＠")
+NUMERIC_VALUE_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\Z")
+
+
+def _may_be_spreadsheet_formula(value):
+    candidate = value.lstrip(" \u00a0")
+    if not candidate:
+        return False
+    if candidate[0] in FORMULA_PREFIXES:
+        return True
+    if candidate[0] in ("+", "-", "＋", "－"):
+        return not NUMERIC_VALUE_RE.fullmatch(candidate)
+    return False
 
 
 def inspect_csv(path):
@@ -26,6 +41,7 @@ def inspect_csv(path):
         missing = Counter()
         nul_cells = 0
         nul_locations = []
+        formula_locations = [(1, header) for header in headers if _may_be_spreadsheet_formula(header)]
         seen_rows = set()
         duplicate_rows = 0
         malformed_rows = []
@@ -46,9 +62,11 @@ def inspect_csv(path):
                 if index >= len(row) or not row[index].strip():
                     missing[header] += 1
             for index, cell in enumerate(row):
+                column = headers[index] if index < len(headers) else f"field {index + 1}"
                 if "\x00" in cell:
-                    column = headers[index] if index < len(headers) else f"field {index + 1}"
                     nul_locations.append((line_number, column))
+                if _may_be_spreadsheet_formula(cell):
+                    formula_locations.append((line_number, column))
             nul_cells = len(nul_locations)
             key = tuple(cell.strip() for cell in row)
             if key in seen_rows:
@@ -62,6 +80,8 @@ def inspect_csv(path):
         "missing": missing,
         "nul_cells": nul_cells,
         "nul_locations": nul_locations,
+        "formula_cells": len(formula_locations),
+        "formula_locations": formula_locations,
         "duplicate_rows": duplicate_rows,
         "malformed_rows": malformed_rows,
     }
@@ -80,7 +100,7 @@ def main():
         return 2
 
     nonempty_missing = [(name, count) for name, count in report["missing"].items() if count]
-    has_findings = report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing or report["nul_cells"]
+    has_findings = (report["duplicate_rows"] or report["malformed_rows"] or nonempty_missing or report["nul_cells"] or report["formula_cells"])
     if args.json_output:
         print(json.dumps({
             "file": str(args.csv_file),
@@ -90,6 +110,10 @@ def main():
             "malformed_rows": [
                 {"line": line, "field_count": fields, "expected_field_count": len(report["headers"])}
                 for line, fields in report["malformed_rows"]
+            ],
+            "possible_spreadsheet_formula_cells": report["formula_cells"],
+            "possible_spreadsheet_formula_locations": [
+                {"line": line, "column": column} for line, column in report["formula_locations"]
             ],
             "blank_or_absent_cells": dict(report["missing"]),
             "cells_with_nul_bytes": report["nul_cells"],
@@ -117,6 +141,9 @@ def main():
 
     print("Cells containing NUL bytes: {}".format(report["nul_cells"]))
     for line, column in report["nul_locations"]:
+        print(f"  Line {line}, column {column}")
+    print("Possible spreadsheet formula cells: {}".format(report["formula_cells"]))
+    for line, column in report["formula_locations"]:
         print(f"  Line {line}, column {column}")
     if has_findings:
         print("Review the flagged rows and source documentation; these checks do not prove the data is incorrect.")

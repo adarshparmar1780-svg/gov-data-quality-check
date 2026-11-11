@@ -19,11 +19,12 @@ The first file is a six-row excerpt from an India Meteorological Department rain
 - Empty or duplicate header names
 - Blank cells per column
 - Cells containing NUL characters, with row and column locations
+- Possible spreadsheet formula cells, with row and column locations
 - Repeated rows
 - Rows with too few or too many fields
 - CSV quoting and file-reading errors
 
-It does not check numeric ranges, units, statistical outliers, whether a value is factually correct, or whether a dataset is up to date. Do not treat a warning as evidence of misconduct or a reason to reject the source.
+Formula warnings are heuristic and intended for review before opening data in a spreadsheet, following the [OWASP CSV injection guidance](https://owasp.org/www-community/attacks/CSV_Injection). The checker does not sanitize or modify the CSV. It does not check numeric ranges, units, statistical outliers, whether a value is factually correct, or whether a dataset is up to date. Do not treat a warning as evidence of misconduct or a reason to reject the source.
 
 ## What the examples show
 

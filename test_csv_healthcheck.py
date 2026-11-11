@@ -36,10 +36,17 @@ class InspectCsvTests(unittest.TestCase):
         self.assertEqual(report["nul_cells"], 1)
         self.assertEqual(report["nul_locations"], [(2, "name")])
 
+    def test_flags_possible_spreadsheet_formulas_and_preserves_signed_numbers(self):
+        report = self.inspect_text("id,value\n1,=1+1\n2, -cmd\n3,-12.5\n4,+8\n5,\t=1+1\n")
+        self.assertEqual(report["formula_locations"], [(2, "value"), (3, "value"), (6, "value")])
     def test_tracks_start_line_of_multiline_csv_record(self):
         report = self.inspect_text('id,note\n1,"first\nsecond"\n2,ok\n')
         self.assertEqual(report["rows"], 2)
         self.assertEqual(report["malformed_rows"], [])
+
+    def test_flags_formula_like_header(self):
+        report = self.inspect_text("=1+1,value\nrow,ok\n")
+        self.assertEqual(report["formula_locations"], [(1, "=1+1")])
 
     def test_rejects_duplicate_headers_after_normalization(self):
         with self.assertRaisesRegex(ValueError, "duplicate column names"):
